@@ -1,0 +1,81 @@
+---
+- name: Provision server for DevSecOps Scanner
+  hosts: all
+  become: yes        # Run as sudo
+
+  vars:
+    docker_user: "ubuntu"    # Change to your server username
+
+  tasks:
+
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required system packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - python3
+          - python3-pip
+          - git
+        state: present
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+        state: present
+
+    - name: Install Docker CE
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: latest
+
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add user to docker group (no sudo needed)
+      user:
+        name: "{{ docker_user }}"
+        groups: docker
+        append: yes
+
+    - name: Install kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        chmod +x kubectl
+        mv kubectl /usr/local/bin/kubectl
+      args:
+        creates: /usr/local/bin/kubectl
+
+    - name: Open firewall port 5000
+      ufw:
+        rule: allow
+        port: "5000"
+        proto: tcp
+
+    - name: Open firewall port 30080 (Kubernetes NodePort)
+      ufw:
+        rule: allow
+        port: "30080"
+        proto: tcp
+
+    - name: Print completion message
+      debug:
+        msg: "Server provisioned successfully. Docker and kubectl are ready."

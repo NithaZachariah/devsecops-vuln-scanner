@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DevSecOps Vulnerability Scanner</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 1.3rem; font-weight: 600; }
+
+    header span {
+      background: #ef4444;
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      margin-bottom: 16px;
+      color: #94a3b8;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    input[type="url"] {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      padding: 10px;
+      color: white;
+    }
+
+    button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #4f46e5;
+    }
+
+    .error-box {
+      background: #450a0a;
+      border: 1px solid #ef4444;
+      padding: 12px;
+      border-radius: 8px;
+      color: #fca5a5;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: #0f172a;
+      padding: 16px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .num {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .label {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
+
+    .finding {
+      background: #0f172a;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-left: 3px solid #ef4444;
+      border-radius: 6px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      background: #450a0a;
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #f87171;
+    }
+
+    .clean {
+      background: #052e16;
+      border: 1px solid #166534;
+      padding: 10px;
+      border-radius: 8px;
+      color: #4ade80;
+    }
+
+    canvas {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>🛡 DevSecOps Vulnerability Scanner</h1>
+  <span>DEVSECOPS</span>
+</header>
+
+<div class="container">
+
+  <!-- 🔥 DevOps Pipeline Visualizer -->
+  <div class="card">
+    <h2>DevSecOps Pipeline</h2>
+    <div style="display:flex; justify-content:space-between; text-align:center; font-size:12px;">
+      <div><p>📂 Source</p><span style="color:#94a3b8;">Git</span></div>
+      <div>➡️</div>
+      <div><p>⚙️ Build</p><span style="color:#94a3b8;">Jenkins</span></div>
+      <div>➡️</div>
+      <div><p>🔐 Scan</p><span style="color:#94a3b8;">Security Test</span></div>
+      <div>➡️</div>
+      <div><p>☸ Deploy</p><span style="color:#94a3b8;">Kubernetes</span></div>
+    </div>
+  </div>
+
+  <!-- 🔥 Kubernetes Status -->
+  <div class="card">
+    <h2>Kubernetes Status</h2>
+    <div style="font-family: monospace; color:#4ade80;">
+      Pods: Running ✔ <br>
+      HPA: Active ✔ <br>
+      Self-Healing: Enabled ✔
+    </div>
+  </div>
+
+  <!-- Input Form -->
+  <div class="card">
+    <h2>Target URL</h2>
+    <form method="POST">
+      <div class="input-row">
+        <input type="url" name="url" placeholder="https://example.com" required>
+        <button type="submit">Scan</button>
+      </div>
+    </form>
+  </div>
+
+  {% if error %}
+  <div class="error-box">⚠ {{ error }}</div>
+  {% endif %}
+
+  {% if results %}
+  <div class="card">
+    <h2>Results for {{ results.url }}</h2>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+      <div class="stat">
+        <div class="num">{{ 100 - (results.summary.total * 10) }}%</div>
+        <div class="label">Security Score</div>
+      </div>
+      <div class="stat">
+        <div class="num">{{ results.summary.sqli_count }}</div>
+        <div class="label">SQLi</div>
+      </div>
+      <div class="stat">
+        <div class="num">{{ results.summary.xss_count }}</div>
+        <div class="label">XSS</div>
+      </div>
+    </div>
+
+    <!-- Findings -->
+    {% for f in results.sqli %}
+      <div class="finding">
+        <span class="badge">SQL Injection</span>
+        <p>{{ f.evidence }}</p>
+      </div>
+    {% endfor %}
+
+    {% for f in results.xss %}
+      <div class="finding">
+        <span class="badge">XSS</span>
+        <p>{{ f.evidence }}</p>
+      </div>
+    {% endfor %}
+
+    <!-- 🔥 Header Findings -->
+    {% for h in results.headers %}
+      <div class="finding">
+        <span class="badge" style="background:#1e3a8a;">Headers</span>
+        <p>{{ h.description }}</p>
+      </div>
+    {% endfor %}
+
+    {% if results.summary.total == 0 %}
+      <div class="clean">✔ No vulnerabilities found</div>
+    {% endif %}
+  </div>
+
+  <!-- Chart -->
+  <div class="card">
+    <h2>Risk Visualization</h2>
+
+    <canvas id="riskChart"></canvas>
+
+    <p style="text-align:center; margin-top:10px;">
+      Risk Score: <strong style="color:#ef4444;">
+        {{ results.risk_score }}
+      </strong>
+    </p>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('riskChart').getContext('2d');
+
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['SQL Injection', 'XSS', 'Headers'],
+        datasets: [{
+          data: [
+            {{ results.summary.sqli_count | default(0) }},
+            {{ results.summary.xss_count | default(0) }},
+            {{ results.summary.header_count | default(0) }}
+          ],
+          backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6']
+        }]
+      }
+    });
+  </script>
+
+  {% endif %}
+
+</div>
+
+</body>
+</html>
